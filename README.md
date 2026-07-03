@@ -1,2 +1,541 @@
 # controldigestivo
 Control digestivo diario
+[index.html](https://github.com/user-attachments/files/29626236/index.html)
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Diario">
+<meta name="theme-color" content="#f4f1e9">
+<title>Diario digestivo</title>
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --card:#fffdf8;
+    --ink:#2f342d;
+    --ink-soft:#6c7166;
+    --line:#e7e2d6;
+    --sage:#6f8f6a;
+    --sage-deep:#4f6d4c;
+    --sage-tint:#eef2ea;
+    /* Escala de intensidad: de calma a fuerte */
+    --lv0:#7ba874;
+    --lv1:#b7c46b;
+    --lv2:#e6c15a;
+    --lv3:#e08e4e;
+    --lv4:#d1614e;
+    --shadow:0 1px 2px rgba(60,60,40,.05), 0 6px 18px rgba(60,60,40,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);}
+  body{
+    font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+    font-size:16px;line-height:1.45;
+    padding:0 0 96px 0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+
+  /* Cabecera */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:rgba(246,243,236,.92);
+    backdrop-filter:saturate(140%) blur(10px);
+    -webkit-backdrop-filter:saturate(140%) blur(10px);
+    border-bottom:1px solid var(--line);
+    padding-top:env(safe-area-inset-top);
+  }
+  .head-inner{max-width:640px;margin:0 auto;padding:12px 16px 10px;}
+  .brand{display:flex;align-items:baseline;gap:8px;}
+  .brand h1{
+    font-family:ui-serif,Georgia,"Times New Roman",serif;
+    font-weight:600;font-size:20px;margin:0;letter-spacing:.2px;
+  }
+  .brand .who{color:var(--ink-soft);font-size:13px;}
+  .datebar{display:flex;align-items:center;gap:10px;margin-top:10px;}
+  .datebar button.nav{
+    width:38px;height:38px;flex:0 0 auto;border:1px solid var(--line);
+    background:var(--card);border-radius:12px;font-size:18px;color:var(--sage-deep);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .datebar button.nav:active{background:var(--sage-tint);}
+  .datefield{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .datefield .weekday{font-size:12px;color:var(--ink-soft);text-transform:capitalize;}
+  .datefield .day{
+    font-family:ui-serif,Georgia,serif;font-size:17px;font-weight:600;
+    text-transform:capitalize;
+  }
+  .datefield input[type=date]{
+    position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;cursor:pointer;
+  }
+  .saved{
+    text-align:center;font-size:12px;color:var(--sage);min-height:16px;
+    transition:opacity .3s;opacity:0;margin-top:4px;
+  }
+  .saved.show{opacity:1;}
+
+  /* Tarjetas de sección */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:16px;margin-top:14px;box-shadow:var(--shadow);
+  }
+  .card > .card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+  .card .ic{font-size:20px;line-height:1;}
+  .card h2{margin:0;font-size:16px;font-weight:650;}
+  .card .hint{color:var(--ink-soft);font-size:13px;margin:2px 0 10px;}
+
+  label.f{display:block;margin-top:12px;}
+  label.f .lab{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:6px;}
+  input[type=text],input[type=time],textarea,input.num{
+    width:100%;font-size:16px;font-family:inherit;color:var(--ink);
+    background:#fdfcf7;border:1px solid var(--line);border-radius:12px;
+    padding:11px 12px;outline:none;transition:border-color .15s,box-shadow .15s;
+  }
+  textarea{resize:vertical;min-height:52px;line-height:1.4;}
+  input:focus,textarea:focus{border-color:var(--sage);box-shadow:0 0 0 3px var(--sage-tint);}
+  input[type=time]{width:auto;min-width:130px;}
+
+  /* Escala de intensidad (firma visual) */
+  .scale{display:flex;gap:6px;}
+  .scale button{
+    flex:1;border:1px solid var(--line);background:#fdfcf7;border-radius:12px;
+    padding:9px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;
+    transition:transform .08s, box-shadow .15s, border-color .15s;
+  }
+  .scale button:active{transform:scale(.96);}
+  .scale .dot{width:18px;height:18px;border-radius:50%;background:var(--d);opacity:.55;transition:opacity .15s,transform .15s;}
+  .scale .t{font-size:11px;color:var(--ink-soft);line-height:1.1;text-align:center;}
+  .scale button[aria-pressed="true"]{
+    border-color:var(--d);background:color-mix(in srgb,var(--d) 12%,#fff);
+    box-shadow:0 0 0 2px color-mix(in srgb,var(--d) 25%,transparent);
+  }
+  .scale button[aria-pressed="true"] .dot{opacity:1;transform:scale(1.18);}
+  .scale button[aria-pressed="true"] .t{color:var(--ink);font-weight:600;}
+
+  /* Interruptor deporte */
+  .toggle{display:flex;gap:8px;}
+  .toggle button{
+    flex:1;border:1px solid var(--line);background:#fdfcf7;border-radius:12px;
+    padding:11px;font-size:15px;font-family:inherit;color:var(--ink-soft);cursor:pointer;
+  }
+  .toggle button[aria-pressed="true"]{
+    background:var(--sage-tint);border-color:var(--sage);color:var(--sage-deep);font-weight:600;
+  }
+  .collapsible{overflow:hidden;transition:max-height .25s ease, opacity .2s;}
+  .collapsible[data-open="false"]{max-height:0;opacity:0;}
+  .collapsible[data-open="true"]{max-height:600px;opacity:1;}
+
+  /* Contador deposiciones */
+  .stepper{display:flex;align-items:center;gap:12px;}
+  .stepper button{
+    width:42px;height:42px;border:1px solid var(--line);background:#fdfcf7;border-radius:12px;
+    font-size:22px;color:var(--sage-deep);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .stepper button:active{background:var(--sage-tint);}
+  .stepper .val{font-size:20px;font-weight:650;min-width:28px;text-align:center;}
+
+  /* Acciones fijas abajo */
+  .actionbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    background:rgba(246,243,236,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .actionbar .inner{max-width:640px;margin:0 auto;display:flex;gap:10px;}
+  .btn{
+    flex:1;border:0;border-radius:14px;padding:13px 10px;font-size:14px;font-weight:600;
+    font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .btn.primary{background:var(--sage-deep);color:#fff;}
+  .btn.primary:active{background:var(--sage);}
+  .btn.ghost{background:var(--card);color:var(--sage-deep);border:1px solid var(--line);}
+  .btn.ghost:active{background:var(--sage-tint);}
+
+  /* Historial (modal simple) */
+  .sheet{
+    position:fixed;inset:0;z-index:40;background:rgba(40,44,38,.35);
+    display:none;align-items:flex-end;
+  }
+  .sheet.show{display:flex;}
+  .sheet-card{
+    background:var(--paper);width:100%;max-width:640px;margin:0 auto;
+    border-radius:22px 22px 0 0;max-height:82vh;overflow:auto;
+    padding:8px 16px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.15);
+  }
+  .grip{width:40px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 4px;}
+  .sheet-card h3{font-family:ui-serif,Georgia,serif;font-size:18px;margin:6px 4px 12px;}
+  .hist-item{
+    display:flex;align-items:center;gap:12px;padding:12px 12px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;
+  }
+  .hist-item:active{background:var(--sage-tint);}
+  .hist-dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto;}
+  .hist-date{font-weight:600;text-transform:capitalize;font-size:15px;}
+  .hist-sub{font-size:12px;color:var(--ink-soft);}
+  .empty{color:var(--ink-soft);text-align:center;padding:30px 10px;font-size:14px;}
+
+  .note{
+    font-size:12px;color:var(--ink-soft);text-align:center;margin:18px 8px 4px;line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner">
+    <div class="brand">
+      <h1>Diario digestivo</h1>
+      <span class="who">· Encarnación</span>
+    </div>
+    <div class="datebar">
+      <button class="nav" id="prevDay" aria-label="Día anterior">‹</button>
+      <div class="datefield">
+        <span class="weekday" id="lblWeekday">—</span>
+        <span class="day" id="lblDay">—</span>
+        <input type="date" id="datePicker" aria-label="Elegir fecha">
+      </div>
+      <button class="nav" id="nextDay" aria-label="Día siguiente">›</button>
+    </div>
+    <div class="saved" id="savedMsg">Guardado ✓</div>
+  </div>
+</header>
+
+<main class="wrap" id="form"><!-- se rellena por JS --></main>
+
+<p class="note">
+  Este diario es un registro personal para observar patrones y compartirlo con el médico.<br>
+  No sustituye el diagnóstico ni el consejo profesional.
+</p>
+
+<div class="actionbar">
+  <div class="inner">
+    <button class="btn ghost" id="btnHistory">📅 Historial</button>
+    <button class="btn ghost" id="btnShare">📤 Compartir día</button>
+    <button class="btn primary" id="btnExport">⬇︎ Exportar (Excel)</button>
+  </div>
+</div>
+
+<div class="sheet" id="histSheet">
+  <div class="sheet-card">
+    <div class="grip"></div>
+    <h3>Historial de días</h3>
+    <div id="histList"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- Configuración de las secciones del diario ---------- */
+const LEVELS = ["Nada","Poca","Media","Bastante","Mucha"];
+const LEVEL_VARS = ["--lv0","--lv1","--lv2","--lv3","--lv4"];
+
+const SECTIONS = [
+  { id:"wake", ic:"🌅", title:"Al despertar",
+    hint:"¿Cómo te has levantado esta mañana?",
+    fields:[
+      {k:"level", type:"level", lab:"Hinchazón al despertar"},
+      {k:"notes", type:"textarea", lab:"¿Cómo te encuentras? (notas)", ph:"Descansada, hinchada, con molestias…"}
+    ]},
+  { id:"breakfast", ic:"🥣", title:"Desayuno",
+    fields:[
+      {k:"time", type:"time", lab:"¿A qué hora?"},
+      {k:"what", type:"textarea", lab:"¿Qué has desayunado?", ph:"Café con leche, tostada con tomate…"},
+      {k:"level", type:"level", lab:"¿Hinchazón después?"},
+      {k:"notes", type:"textarea", lab:"Notas (opcional)", ph:"Cuánto tardó, otras molestias…"}
+    ]},
+  { id:"midmorning", ic:"🍎", title:"Entre horas · mañana",
+    hint:"Si has picado algo a media mañana.",
+    fields:[
+      {k:"time", type:"time", lab:"¿A qué hora?"},
+      {k:"what", type:"textarea", lab:"¿Qué has tomado?", ph:"Fruta, galletas, un café…"},
+      {k:"level", type:"level", lab:"¿Hinchazón después?"},
+      {k:"notes", type:"textarea", lab:"Notas (opcional)", ph:""}
+    ]},
+  { id:"lunch", ic:"🍽️", title:"Comida",
+    fields:[
+      {k:"time", type:"time", lab:"¿A qué hora?"},
+      {k:"what", type:"textarea", lab:"¿Qué has comido?", ph:"Primer plato, segundo, postre, bebida…"},
+      {k:"level", type:"level", lab:"¿Hinchazón después?"},
+      {k:"notes", type:"textarea", lab:"Notas (opcional)", ph:""}
+    ]},
+  { id:"snack", ic:"☕", title:"Entre horas · tarde",
+    hint:"Merienda o cualquier picoteo de la tarde.",
+    fields:[
+      {k:"time", type:"time", lab:"¿A qué hora?"},
+      {k:"what", type:"textarea", lab:"¿Qué has tomado?", ph:""},
+      {k:"level", type:"level", lab:"¿Hinchazón después?"},
+      {k:"notes", type:"textarea", lab:"Notas (opcional)", ph:""}
+    ]},
+  { id:"dinner", ic:"🌙", title:"Cena",
+    fields:[
+      {k:"time", type:"time", lab:"¿A qué hora?"},
+      {k:"what", type:"textarea", lab:"¿Qué has cenado?", ph:""},
+      {k:"level", type:"level", lab:"¿Hinchazón después?"},
+      {k:"notes", type:"textarea", lab:"Notas (opcional)", ph:""}
+    ]},
+  { id:"sport", ic:"🚶‍♀️", title:"Actividad física",
+    fields:[
+      {k:"done", type:"toggle", lab:"¿Has hecho deporte hoy?"},
+      {k:"time", type:"time", lab:"¿A qué hora?", dep:"done"},
+      {k:"type", type:"text", lab:"¿Qué tipo?", ph:"Caminar, pilates, bici…", dep:"done"},
+      {k:"effect", type:"textarea", lab:"¿Cómo te ha afectado?", ph:"Mejor, igual, más hinchada…", dep:"done"}
+    ]},
+  { id:"stool", ic:"🚻", title:"Deposiciones",
+    hint:"Opcional, pero muy útil para el médico.",
+    fields:[
+      {k:"count", type:"stepper", lab:"Número de veces hoy"},
+      {k:"notes", type:"textarea", lab:"Notas", ph:"Consistencia, molestias, urgencia…"}
+    ]},
+  { id:"dayEnd", ic:"🛏️", title:"Fin del día",
+    hint:"Un resumen de cómo terminas.",
+    fields:[
+      {k:"level", type:"level", lab:"¿Cómo terminas el día de hinchazón?"},
+      {k:"notes", type:"textarea", lab:"Notas del día", ph:"Cómo te has sentido en general…"}
+    ]}
+];
+
+/* ---------- Almacenamiento ---------- */
+const STORE_KEY = "diario_digestivo_v1";
+let DB = {};
+try { DB = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch(e){ DB = {}; }
+
+function persist(){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(DB)); }
+  catch(e){ alert("No se pudieron guardar los datos en este navegador."); }
+}
+
+/* ---------- Fechas ---------- */
+let current = todayKey();
+function todayKey(){ return toKey(new Date()); }
+function toKey(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fromKey(k){ const [y,m,d]=k.split("-").map(Number); return new Date(y,m-1,d); }
+const WD = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MO = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function prettyWeekday(k){ return WD[fromKey(k).getDay()]; }
+function prettyDay(k){ const d=fromKey(k); return d.getDate()+" de "+MO[d.getMonth()]+" de "+d.getFullYear(); }
+
+function rec(k){ if(!DB[k]) DB[k]={}; return DB[k]; }
+function shift(days){
+  const d = fromKey(current); d.setDate(d.getDate()+days);
+  current = toKey(d); render();
+}
+
+/* ---------- Guardado con indicador ---------- */
+let savedTimer=null;
+function markSaved(){
+  persist();
+  const m=document.getElementById("savedMsg");
+  m.classList.add("show");
+  clearTimeout(savedTimer);
+  savedTimer=setTimeout(()=>m.classList.remove("show"),1200);
+}
+function setVal(sec,key,value){ rec(current)[sec] = rec(current)[sec]||{}; rec(current)[sec][key]=value; markSaved(); }
+function getVal(sec,key){ return (DB[current]&&DB[current][sec]&&DB[current][sec][key]!==undefined)?DB[current][sec][key]:null; }
+
+/* ---------- Render del formulario ---------- */
+function render(){
+  document.getElementById("lblWeekday").textContent = prettyWeekday(current);
+  document.getElementById("lblDay").textContent = prettyDay(current);
+  document.getElementById("datePicker").value = current;
+
+  const form = document.getElementById("form");
+  form.innerHTML = "";
+
+  SECTIONS.forEach(sec=>{
+    const card = document.createElement("section");
+    card.className="card";
+    const head = document.createElement("div"); head.className="card-head";
+    head.innerHTML = `<span class="ic">${sec.ic}</span><h2>${sec.title}</h2>`;
+    card.appendChild(head);
+    if(sec.hint){ const h=document.createElement("div"); h.className="hint"; h.textContent=sec.hint; card.appendChild(h); }
+
+    // ¿tiene interruptor (deporte)? controla los campos dependientes
+    const hasToggle = sec.fields.some(f=>f.type==="toggle");
+    let dependWrap=null;
+
+    sec.fields.forEach(f=>{
+      const el = buildField(sec, f);
+      if(f.dep){ // campo dependiente del toggle
+        if(!dependWrap){ dependWrap=document.createElement("div"); dependWrap.className="collapsible"; card.appendChild(dependWrap); }
+        dependWrap.appendChild(el);
+      } else {
+        card.appendChild(el);
+      }
+    });
+
+    if(hasToggle && dependWrap){
+      const open = getVal(sec.id,"done")===true;
+      dependWrap.setAttribute("data-open", open?"true":"false");
+    }
+    form.appendChild(card);
+  });
+}
+
+function buildField(sec, f){
+  const wrap = document.createElement("label");
+  wrap.className="f";
+  const lab = document.createElement("span"); lab.className="lab"; lab.textContent=f.lab; wrap.appendChild(lab);
+
+  if(f.type==="time"){
+    const i=document.createElement("input"); i.type="time";
+    const v=getVal(sec.id,f.k); if(v) i.value=v;
+    i.addEventListener("input",()=>setVal(sec.id,f.k,i.value));
+    wrap.appendChild(i);
+  }
+  else if(f.type==="text"){
+    const i=document.createElement("input"); i.type="text"; if(f.ph)i.placeholder=f.ph;
+    const v=getVal(sec.id,f.k); if(v) i.value=v;
+    i.addEventListener("input",()=>setVal(sec.id,f.k,i.value));
+    wrap.appendChild(i);
+  }
+  else if(f.type==="textarea"){
+    const t=document.createElement("textarea"); if(f.ph)t.placeholder=f.ph; t.rows=2;
+    const v=getVal(sec.id,f.k); if(v) t.value=v;
+    t.addEventListener("input",()=>setVal(sec.id,f.k,t.value));
+    wrap.appendChild(t);
+  }
+  else if(f.type==="level"){
+    const box=document.createElement("div"); box.className="scale";
+    const cur=getVal(sec.id,f.k);
+    LEVELS.forEach((name,idx)=>{
+      const b=document.createElement("button"); b.type="button";
+      b.style.setProperty("--d",`var(${LEVEL_VARS[idx]})`);
+      b.setAttribute("aria-pressed", String(cur===idx));
+      b.innerHTML=`<span class="dot"></span><span class="t">${name}</span>`;
+      b.addEventListener("click",()=>{
+        const already=getVal(sec.id,f.k)===idx;
+        setVal(sec.id,f.k, already?null:idx);
+        box.querySelectorAll("button").forEach((bb,i)=>bb.setAttribute("aria-pressed", String(!already && i===idx)));
+      });
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+  }
+  else if(f.type==="toggle"){
+    const box=document.createElement("div"); box.className="toggle";
+    const cur=getVal(sec.id,f.k);
+    [["Sí",true],["No",false]].forEach(([t,val])=>{
+      const b=document.createElement("button"); b.type="button"; b.textContent=t;
+      b.setAttribute("aria-pressed", String(cur===val));
+      b.addEventListener("click",()=>{
+        setVal(sec.id,f.k,val);
+        box.querySelectorAll("button").forEach((bb,i)=>bb.setAttribute("aria-pressed", String((i===0)===val)));
+        const dw=box.closest(".card").querySelector(".collapsible");
+        if(dw) dw.setAttribute("data-open", val?"true":"false");
+      });
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+  }
+  else if(f.type==="stepper"){
+    const box=document.createElement("div"); box.className="stepper";
+    let n = getVal(sec.id,f.k); if(typeof n!=="number") n=0;
+    const minus=document.createElement("button"); minus.type="button"; minus.textContent="−";
+    const val=document.createElement("span"); val.className="val"; val.textContent=n;
+    const plus=document.createElement("button"); plus.type="button"; plus.textContent="+";
+    minus.addEventListener("click",()=>{ n=Math.max(0,n-1); val.textContent=n; setVal(sec.id,f.k,n); });
+    plus.addEventListener("click",()=>{ n=n+1; val.textContent=n; setVal(sec.id,f.k,n); });
+    box.appendChild(minus); box.appendChild(val); box.appendChild(plus);
+    wrap.appendChild(box);
+  }
+  return wrap;
+}
+
+/* ---------- Historial ---------- */
+function openHistory(){
+  const list=document.getElementById("histList");
+  list.innerHTML="";
+  const keys=Object.keys(DB).filter(k=>hasContent(DB[k])).sort().reverse();
+  if(keys.length===0){
+    list.innerHTML='<div class="empty">Todavía no hay días guardados.<br>Rellena el diario de hoy y aparecerá aquí.</div>';
+  } else {
+    keys.forEach(k=>{
+      const lv = DB[k].dayEnd && typeof DB[k].dayEnd.level==="number" ? DB[k].dayEnd.level : null;
+      const color = lv!==null ? `var(${LEVEL_VARS[lv]})` : "var(--line)";
+      const item=document.createElement("div"); item.className="hist-item";
+      item.innerHTML=`<span class="hist-dot" style="background:${color}"></span>
+        <div><div class="hist-date">${prettyWeekday(k)}, ${prettyDay(k)}</div>
+        <div class="hist-sub">${lv!==null?("Fin del día: "+LEVELS[lv].toLowerCase()+" hinchazón"):"Sin resumen del día"}</div></div>`;
+      item.addEventListener("click",()=>{ current=k; document.getElementById("histSheet").classList.remove("show"); render(); window.scrollTo(0,0); });
+      list.appendChild(item);
+    });
+  }
+  document.getElementById("histSheet").classList.add("show");
+}
+function hasContent(day){
+  return Object.values(day||{}).some(sec=>Object.values(sec||{}).some(v=>v!==null&&v!==""&&v!==false&&v!==0));
+}
+
+/* ---------- Resumen legible de un día ---------- */
+function daySummary(k){
+  const d=DB[k]||{}; const L=[];
+  L.push("DIARIO DIGESTIVO — "+prettyWeekday(k)+", "+prettyDay(k));
+  SECTIONS.forEach(sec=>{
+    const s=d[sec.id]; if(!s) return;
+    const parts=[];
+    sec.fields.forEach(f=>{
+      let v=s[f.k]; if(v===null||v===undefined||v==="") return;
+      if(f.type==="level") v=LEVELS[v]+" hinchazón";
+      else if(f.type==="toggle") v=v?"sí":"no";
+      else if(f.type==="time") v="a las "+v;
+      else if(f.type==="stepper") v=v+" veces";
+      parts.push(f.lab.replace(/[¿?]/g,"").trim()+": "+v);
+    });
+    if(parts.length) L.push("\n• "+sec.title+"\n   - "+parts.join("\n   - "));
+  });
+  if(L.length===1) L.push("\n(Sin datos registrados este día)");
+  return L.join("\n");
+}
+async function shareDay(){
+  const text=daySummary(current);
+  if(navigator.share){
+    try{ await navigator.share({title:"Diario digestivo", text}); return; }catch(e){ if(e && e.name==="AbortError") return; }
+  }
+  try{ await navigator.clipboard.writeText(text); alert("Resumen del día copiado. Ya puedes pegarlo en WhatsApp, correo o notas."); }
+  catch(e){ prompt("Copia el resumen:", text); }
+}
+
+/* ---------- Exportar a Excel (CSV) ---------- */
+function exportCSV(){
+  const cols=[{h:"Fecha",g:k=>prettyDay(k)}];
+  SECTIONS.forEach(sec=>sec.fields.forEach(f=>{
+    cols.push({h:sec.title+" — "+f.lab.replace(/[¿?]/g,"").trim(), g:k=>{
+      const s=DB[k]&&DB[k][sec.id]; if(!s) return "";
+      let v=s[f.k]; if(v===null||v===undefined) return "";
+      if(f.type==="level") return LEVELS[v]!==undefined?LEVELS[v]:"";
+      if(f.type==="toggle") return v?"Sí":"No";
+      return String(v);
+    }});
+  }));
+  const keys=Object.keys(DB).filter(k=>hasContent(DB[k])).sort();
+  if(keys.length===0){ alert("Todavía no hay datos que exportar."); return; }
+  const esc=s=>'"'+String(s).replace(/"/g,'""').replace(/\r?\n/g," / ")+'"';
+  const rows=[cols.map(c=>esc(c.h)).join(";")];
+  keys.forEach(k=>rows.push(cols.map(c=>esc(c.g(k))).join(";")));
+  const csv="\uFEFF"+rows.join("\r\n"); // BOM para acentos en Excel
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="diario_digestivo_"+todayKey()+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+/* ---------- Eventos ---------- */
+document.getElementById("prevDay").addEventListener("click",()=>shift(-1));
+document.getElementById("nextDay").addEventListener("click",()=>shift(1));
+document.getElementById("datePicker").addEventListener("change",e=>{ if(e.target.value){ current=e.target.value; render(); }});
+document.getElementById("btnHistory").addEventListener("click",openHistory);
+document.getElementById("btnShare").addEventListener("click",shareDay);
+document.getElementById("btnExport").addEventListener("click",exportCSV);
+document.getElementById("histSheet").addEventListener("click",e=>{ if(e.target.id==="histSheet") e.target.classList.remove("show"); });
+
+render();
+</script>
+</body>
+</html>
